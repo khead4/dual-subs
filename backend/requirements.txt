@@ -1,0 +1,10 @@
+fastapi
+uvicorn
+openai-whisper
+transformers
+torch
+requests
+yt-dlp
+python-multipart
+openai
+python-dotenv
