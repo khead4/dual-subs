@@ -1,0 +1,11 @@
+cat > .gitignore << 'EOF'
+.venv/
+*.pyc
+__pycache__/
+.env
+*.mp4
+*.wav
+*.srt
+/frontend/node_modules/
+/frontend/build/
+dualsub_*/
