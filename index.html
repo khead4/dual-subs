@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dual Subtitle Studio</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">Dual Subtitle Product Prototype</p>
+        <h1>Stream or download a video with two added subtitle languages.</h1>
+        <p class="lede">
+          Upload a video or start from a supported link. Choose the original language and two added subtitle
+          languages, then watch or download the result with those two translated subtitle lanes layered above the source audio.
+        </p>
+        <div class="hero-actions">
+          <a class="button button-primary" href="#workspace">Start</a>
+          <a class="button button-secondary" href="#videoPanel">See Video Area</a>
+        </div>
+      </div>
+      <aside class="hero-card">
+        <p class="card-label">What To Do</p>
+        <ol class="pipeline-list">
+          <li>Upload a video or paste a link</li>
+          <li>Pick the original language</li>
+          <li>Pick two added subtitle languages</li>
+          <li>Click Generate Video</li>
+          <li>Play it here or download it</li>
+        </ol>
+      </aside>
+    </header>
+
+    <main id="workspace" class="workspace">
+      <section class="panel panel-intake">
+        <div class="section-heading">
+          <p class="section-kicker">1. Source Intake</p>
+          <h2>Start with a video file or a link</h2>
+          <p>
+            Add the source you want to watch.
+          </p>
+        </div>
+
+        <div class="source-grid source-grid-two">
+          <article class="source-card active" data-source-card="upload-video">
+            <h3>Upload Video</h3>
+            <p>Local files such as MP4, MKV, MOV, AVI, WEBM.</p>
+          </article>
+          <article class="source-card" data-source-card="external-link">
+            <h3>Paste Link</h3>
+            <p>YouTube or streaming-service links that a backend worker can process.</p>
+          </article>
+        </div>
+
+        <div class="input-grid">
+          <label class="field">
+            <span>Video Or Media File</span>
+            <input id="mediaFile" type="file" accept=".mp4,.mkv,.mov,.avi,.webm,.m4v,audio/*,video/*">
+          </label>
+
+          <label class="field field-wide">
+            <span>External Link</span>
+            <input
+              id="sourceUrl"
+              type="url"
+              placeholder="https://www.youtube.com/watch?v=... or streaming page link"
+            >
+          </label>
+
+          <label class="field">
+            <span>Provider</span>
+            <select id="providerSelect">
+              <option value="youtube">YouTube</option>
+              <option value="netflix">Netflix</option>
+              <option value="hulu">Hulu</option>
+              <option value="prime_video">Prime Video</option>
+              <option value="generic">Generic Link</option>
+            </select>
+          </label>
+        </div>
+        <input id="outputMode" type="hidden" value="burned_export">
+
+        <div class="note-banner">
+          <strong>Best results:</strong> upload a video file if you want the fastest playable preview after generation.
+        </div>
+      </section>
+
+      <section class="panel panel-languages">
+        <div class="section-heading">
+          <p class="section-kicker">2. Language Setup</p>
+          <h2>Choose the original language and two added subtitle languages</h2>
+          <p>
+            Pick the source language, then the two subtitle languages you want added to the video.
+          </p>
+        </div>
+
+        <div class="language-grid">
+          <label class="field">
+            <span>Original Language</span>
+            <select id="nativeLanguage"></select>
+          </label>
+
+          <label class="field">
+            <span>Subtitle Language 1</span>
+            <select id="targetLanguageA"></select>
+          </label>
+
+          <label class="field">
+            <span>Subtitle Language 2</span>
+            <select id="targetLanguageB"></select>
+          </label>
+        </div>
+
+        <div class="chips" id="languageSummary"></div>
+      </section>
+
+      <section id="videoPanel" class="panel panel-layout">
+        <div class="section-heading">
+          <p class="section-kicker">3. Subtitle Layout</p>
+          <h2>Generate and watch the video</h2>
+          <p>
+            Click generate, then the video will appear here with the two added subtitle lanes.
+          </p>
+        </div>
+
+        <div class="layout-grid">
+          <div class="controls">
+            <div class="action-stack">
+              <button class="button button-primary button-inline" id="submitJob" type="button">Generate Video</button>
+              <div class="output-actions" aria-label="Generated output choices">
+                <button class="button button-secondary button-inline button-disabled" id="watchNowButton" type="button" disabled>Watch Now</button>
+                <button class="button button-secondary button-inline button-disabled" id="downloadLanguageAButton" type="button" disabled>Language 1 SRT</button>
+                <button class="button button-secondary button-inline button-disabled" id="downloadLanguageBButton" type="button" disabled>Language 2 SRT</button>
+                <a class="button button-secondary button-inline button-disabled" id="downloadVideoButton" href="#" download aria-disabled="true">Download Video</a>
+              </div>
+            </div>
+            <p class="process-caption" id="playerHint">
+              After generation, choose Watch Now, download either language SRT, or download the video when a rendered video is available.
+            </p>
+            <div class="progress-card" id="progressCard" data-state="idle">
+              <div class="progress-header">
+                <strong id="progressLabel">Ready to start</strong>
+                <span id="progressPercent">0%</span>
+              </div>
+              <div class="progress-bar" aria-hidden="true">
+                <span id="progressFill"></span>
+              </div>
+              <div class="progress-row">
+                <span id="progressEta">Estimated time remaining: --</span>
+                <span id="progressMeta">No active upload or download.</span>
+              </div>
+            </div>
+            <input id="safeArea" type="hidden" value="14">
+            <input id="trackGap" type="hidden" value="14">
+            <input id="maxChars" type="hidden" value="28">
+            <input id="themeSelect" type="hidden" value="cinema">
+            <span id="safeAreaValue" hidden>14</span>
+            <span id="trackGapValue" hidden>14</span>
+            <span id="maxCharsValue" hidden>28</span>
+          </div>
+
+          <div class="player-preview">
+            <video id="resultVideo" class="result-video" controls playsinline preload="metadata"></video>
+            <div class="screen-gradient"></div>
+            <div class="subtitle-stage" id="subtitleStage">
+              <div class="subtitle-track subtitle-track-a" id="trackA"></div>
+              <div class="subtitle-track subtitle-track-b" id="trackB"></div>
+            </div>
+            <div class="screen-meta">
+              <span id="playerLabel">Generated video preview</span>
+              <span id="timingPreview">00:18 - 00:22</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-process" hidden>
+        <div class="section-heading">
+          <p class="section-kicker">4. Processing Flow</p>
+          <h2>Receive the source, add two subtitle languages, then stream or download the video</h2>
+          <p>
+            This page is designed around the exact product workflow: accept a video upload or link, build the native timed transcript internally,
+            translate it into two user-selected subtitle languages, and apply both subtitle tracks to the video with a fixed buffer so legibility stays intact.
+          </p>
+        </div>
+
+        <div class="process-grid">
+          <div class="process-actions">
+            <button class="button button-primary button-inline" id="simulateProcessing" type="button">Build Processing Plan</button>
+            <p class="process-caption">
+              This simulates the job orchestration your server will execute once real transcription, translation, and video-render services are connected.
+            </p>
+          </div>
+
+          <div class="process-summary" id="processSummary">
+            <article class="summary-card">
+              <h3>Source</h3>
+              <p>Select a link or upload a local file to define the ingest path.</p>
+            </article>
+            <article class="summary-card">
+              <h3>Transcript</h3>
+              <p>The server will extract existing captions or generate timed speech-to-text cues behind the scenes.</p>
+            </article>
+            <article class="summary-card">
+              <h3>Render</h3>
+              <p>Two added subtitle lanes will be placed back onto the video with safe-area padding and a lane buffer.</p>
+            </article>
+          </div>
+
+          <div class="status-list" id="statusList">
+            <div class="status-item"><span>1</span><div><strong>Intake pending</strong><p>Awaiting source type and language setup.</p></div></div>
+            <div class="status-item"><span>2</span><div><strong>Transcript pending</strong><p>Timed cue generation has not started yet.</p></div></div>
+            <div class="status-item"><span>3</span><div><strong>Dual subtitle lanes pending</strong><p>Two added subtitle languages will be created from the same cue timeline.</p></div></div>
+            <div class="status-item"><span>4</span><div><strong>Video output pending</strong><p>The result will be streamed in-browser or packaged for video download.</p></div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="panel panel-server" hidden>
+        <div class="section-heading">
+          <p class="section-kicker">5. Server Contract</p>
+          <h2>What the backend needs to do</h2>
+        </div>
+
+        <div class="server-grid">
+          <article class="server-card">
+            <h3>Inputs</h3>
+            <ul>
+              <li>Uploaded video or supported link</li>
+              <li>Or a link plus provider metadata</li>
+              <li>Original language and two target languages</li>
+              <li>Layout preferences and stream or download mode</li>
+            </ul>
+          </article>
+
+          <article class="server-card">
+            <h3>Pipeline</h3>
+            <ul>
+              <li>Extract the native transcript or captions with timestamps</li>
+              <li>Normalize subtitle cue segments</li>
+              <li>Translate cue text into two languages</li>
+              <li>Run line wrapping and overlap avoidance</li>
+              <li>Return a streaming overlay or downloadable video package</li>
+            </ul>
+          </article>
+
+          <article class="server-card">
+            <h3>Outputs</h3>
+            <ul>
+              <li>Streaming overlay data for the web player</li>
+              <li>Downloadable video-ready subtitle outputs</li>
+              <li>Optional burned-in video export workflow</li>
+              <li>Job status and processing errors</li>
+            </ul>
+          </article>
+        </div>
+      </section>
+
+      <section class="panel panel-request" hidden>
+        <div class="section-heading">
+          <p class="section-kicker">4. Action</p>
+          <h2>Generate the video, then play or download it</h2>
+          <p>
+            When you are ready, click generate. After it finishes, the playable video shows up above and the download option becomes available when a downloadable result exists.
+          </p>
+        </div>
+
+        <div class="request-actions">
+          <button class="button button-secondary button-inline" id="generatePayload" type="button">Refresh Choices</button>
+        </div>
+      </section>
+
+      <section class="panel panel-results">
+        <div class="section-heading">
+          <p class="section-kicker">5. Status</p>
+          <h2>Check the latest result</h2>
+          <p>
+            This area shows the latest status and any messages you need before playback or download.
+          </p>
+        </div>
+
+        <div class="results-grid">
+          <article class="result-card">
+            <h3>Job Status</h3>
+            <div class="status-badge" id="jobStatusBadge">Waiting</div>
+            <p class="result-copy" id="jobStatusText">No job has been submitted yet.</p>
+          </article>
+
+          <article class="result-card">
+            <h3>Messages</h3>
+            <div class="message-list" id="jobMessages">
+              <p class="empty-copy">Messages will appear here after you generate the video.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="results-grid" hidden>
+          <article class="result-card result-card-wide">
+            <h3>Generated Files</h3>
+            <div class="artifact-list" id="artifactList">
+              <p class="empty-copy">Generated subtitle downloads and overlay payloads will appear here.</p>
+            </div>
+          </article>
+        </div>
+
+        <div class="results-grid" hidden>
+          <article class="result-card result-card-wide">
+            <h3>Translated Cue Preview</h3>
+            <div class="cue-list" id="cueList">
+              <p class="empty-copy">The first translated subtitle cues will appear here after processing.</p>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section id="architecture" class="panel panel-architecture" hidden>
+        <div class="section-heading">
+          <p class="section-kicker">System Design</p>
+          <h2>How this becomes a real product</h2>
+        </div>
+
+        <div class="architecture-steps">
+            <article>
+              <span>01</span>
+            <h3>Hidden transcript first</h3>
+            <p>
+              Yes, the foundation is a transcript broken into cues with start and end times. Every translation stays attached
+              to the same cue IDs so the two added subtitle tracks remain synchronized with the source.
+            </p>
+          </article>
+          <article>
+            <span>02</span>
+            <h3>Two added subtitle languages</h3>
+            <p>
+              Each cue gets translated twice using your translation model of choice. The system stores both outputs side by side
+              instead of overwriting a single subtitle lane.
+            </p>
+          </article>
+          <article>
+            <span>03</span>
+            <h3>Render safely</h3>
+            <p>
+              Layout rules decide which lane sits above the other, how much padding is reserved, and when line breaks or font
+              scaling are needed to preserve legibility.
+            </p>
+          </article>
+          <article>
+            <span>04</span>
+            <h3>Deliver flexibly</h3>
+            <p>
+              The web player can stream the subtitle lanes as overlays, while the backend can also prepare a downloadable video result
+              with the two added subtitle languages attached.
+            </p>
+          </article>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="api-config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
