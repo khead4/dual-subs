@@ -97,9 +97,22 @@ The frontend can call a hosted API, so translation and video processing do not n
 - For quick testing, open the frontend with `?api=https://your-hosted-backend.example.com`. The app stores that hosted API URL in browser local storage.
 - Use an `https://` backend URL for the deployed Vercel frontend so browser security does not block API calls.
 
-For heavier video work, the best setup is usually Vercel for the static frontend and a container backend such as Google Cloud Run, Render, Railway, or Fly.io for transcription, contextual translation, and optional video rendering. The backend host should hold `OPENAI_API_KEY` or another provider key, plus any worker/storage settings.
+For heavier video work, the recommended setup is Vercel for the static frontend and Google Cloud Run for the container backend that handles transcription, contextual translation, and optional video rendering. This keeps the frontend from depending on Railway or your personal computer. The backend host should hold `OPENAI_API_KEY` or another provider key, plus any worker/storage settings.
 
 The included [Dockerfile](Dockerfile) runs the FastAPI backend with `ffmpeg` installed and `JOB_PROCESSING_MODE=inline`, which is the simplest hosted mode for the current in-memory job model. After deploying the container, put the public backend URL in [api-config.js](api-config.js).
+
+If you want the Vercel frontend to call Cloud Run through same-origin `/api` instead of exposing the Cloud Run URL in `api-config.js`, replace the `/api` rewrite in [vercel.json](vercel.json) after the Cloud Run URL exists:
+
+```json
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://YOUR-CLOUD-RUN-URL.a.run.app/api/$1"
+    }
+  ]
+}
+```
 
 ## Local offline setup
 
